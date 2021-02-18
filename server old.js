@@ -22,11 +22,15 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: false }
 }))
-app.use(require('./middlwares/flash'))
 
 
 // Routes
 app.get('/', (request, response) => {
+    // Si on a une erreur en session, on récupère une variable local dans la réponse et on repasse la variable de session à undefined
+    if (request.session.error) {
+        response.locals.error = request.session.error
+        request.session.error = undefined
+    }
     console.log(request.session)
     response.render('pages/index')
 })
@@ -34,8 +38,8 @@ app.get('/', (request, response) => {
 app.post('/', (request, response) => {
     // Si le champ est vide
     if (request.body.message === undefined || request.body.message === '') {
-        // On stocke une erreur dans la requête flash du Middleware qu'on a créé et on redirige
-        request.flash('error', "Vous n'avez pas posté de message")
+        // On stocke une erreur en session et on redirige
+        request.session.error = "Vous n'avez pas posté de message"
         response.redirect('/')
     }
 })
