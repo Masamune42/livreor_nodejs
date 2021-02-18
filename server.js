@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const session = require('express-session')
+const mysql = require('mysql')
 
 let app = express()
 
@@ -22,8 +23,7 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: false }
 }))
-app.use(require('./middlwares/flash'))
-
+app.use(require('./middlewares/flash'))
 
 // Routes
 app.get('/', (request, response) => {
@@ -37,7 +37,14 @@ app.post('/', (request, response) => {
         // On stocke une erreur dans la requête flash du Middleware qu'on a créé et on redirige
         request.flash('error', "Vous n'avez pas posté de message")
         response.redirect('/')
+    } else {
+        let Message = require('./Models/message')
+        Message.create(request.body.message, function () {
+            request.flash('success', "Merci !")
+            response.redirect('/')
+        })
     }
+
 })
 
 app.listen(8080)
