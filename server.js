@@ -2,7 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const mysql = require('mysql')
-
+const { request } = require('express')
+let Message = require('./models/message')
 let app = express()
 
 // Moteur de templates
@@ -26,11 +27,13 @@ app.use(session({
 app.use(require('./middlewares/flash'))
 
 // Routes
+// Accueil
 app.get('/', (request, response) => {
-    console.log(request.session)
-    response.render('pages/index')
+    Message.all(function (messages) {
+        response.render('pages/index', { messages: messages })
+    })
 })
-
+// Envoi d'un message
 app.post('/', (request, response) => {
     // Si le champ est vide
     if (request.body.message === undefined || request.body.message === '') {
@@ -38,13 +41,17 @@ app.post('/', (request, response) => {
         request.flash('error', "Vous n'avez pas posté de message")
         response.redirect('/')
     } else {
-        let Message = require('./Models/message')
         Message.create(request.body.message, function () {
             request.flash('success', "Merci !")
             response.redirect('/')
         })
     }
-
+})
+// Affichage d'un message
+app.get('/message/:id', (request, response) => {
+    Message.find(request.params.id, function (message) {
+        response.render('pages/show', { message: message })
+    });
 })
 
 app.listen(8080)
